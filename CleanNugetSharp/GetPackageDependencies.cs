@@ -9,37 +9,32 @@ namespace CleanNugetSharp
 {
   public class GetPackageDependencies
   {
-    IPackageRepository repo;
-
+    readonly IPackageRepository _repo;
     public GetPackageDependencies(IPackageRepository repository)
     {
-      repo = repository;
+      _repo = repository;
     }
-    public IPackage GetPackageDependenciesRecursive(IPackage package, ref List<PackageDependency> dependencies)
+    public void GetPackageDependenciesRecursive(DataServicePackage package, HashSet<DataServicePackage> dependencies)
     {
+      dependencies.Add(package);
+      var packagesToReslove = new List<DataServicePackage>();
 
-      var packageDependencySets = package.DependencySets;
-      if (!packageDependencySets.Any())
-      {
-        return package;
-      }
-      foreach (var packageDependencySet in packageDependencySets)
+      foreach (var packageDependencySet in package.DependencySets)
       {
         foreach (var dependency in packageDependencySet.Dependencies)
         {
-          //SemanticVersion ver = new SemanticVersion(dependency.VersionSpec.MaxVersion);
-          var dependecyPackage = repo.ResolveDependency(dependency, true, true);
-          if (dependecyPackage != null)
+          var dependecyPackage = (DataServicePackage)_repo.ResolveDependency(dependency, true, true);
+          if (dependecyPackage != null && !dependencies.Contains(dependecyPackage))
           {
-            return GetPackageDependenciesRecursive(dependecyPackage, ref dependencies);
-          }
-          else
-          {
-            throw new Exception("Dependency not found");
+            packagesToReslove.Add(dependecyPackage);
           }
         }
       }
-      return package;
+
+      foreach (var p in packagesToReslove)
+      {
+        GetPackageDependenciesRecursive(p, dependencies);
+      }
     }
   }
 }
