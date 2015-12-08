@@ -90,6 +90,10 @@ namespace CleanNugetSharp
             packagesUsedInCsproj.Add(pack);
           }
         }
+        else
+        {
+          logger.Info(string.Format("skipping '{0}' reference for csproj {1}", reference.Attributes[0].Value, path));
+        }
       }
     }
   }

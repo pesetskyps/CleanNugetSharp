@@ -28,15 +28,14 @@ namespace CleanNugetSharp
       string datasourcePackagesRegexSearchPattern = appConfig.datasourcePackagesRegexSearchPattern;
       string otherPackagesRegexSearchPattern = appConfig.otherPackagesRegexSearchPattern;
       string[] publicRepositories = appConfig.publicRepositories;
+      string csprojNamespace = appConfig.csprojNamespace;
 
-      string csprojNamespace;
-      string datasourceMask;
-      int countOfPreviousVersionsToStore;
-      string nugetServerUrl;
-      string packageBackupfolder;
-      string dataSourceDefaultVersion;
-      string datasourcePackageAddString;
-      bool whatif;
+      int countOfPreviousVersionsToStore = appConfig.countOfPreviousVersionsToStore;
+      string nugetServerUrl = appConfig.nugetServerUrl;
+      string packageBackupfolder =appConfig.packageBackupfolder;
+      string dataSourceDefaultVersion =appConfig.dataSourceDefaultVersion;
+      string datasourcePackageAddString = appConfig.datasourcePackageAddString;
+      bool whatif = appConfig.whatif;
 
       try
       {
@@ -44,17 +43,15 @@ namespace CleanNugetSharp
         var options = new Options();
         if (CommandLine.Parser.Default.ParseArguments(args, options))
         {
-          csprojNamespace = options.csprojNamespace;
-          datasourceMask = options.datasourceMask;
-          countOfPreviousVersionsToStore = options.countOfPreviousVersionsToStore;
-          nugetServerUrl = options.nugetServerUrl;
-          packageBackupfolder = options.packageBackupfolder;
-          dataSourceDefaultVersion = options.dataSourceDefaultVersion;
+          if (options.csprojNamespace != null) csprojNamespace = options.csprojNamespace;
+          if (options.countOfPreviousVersionsToStore != null) countOfPreviousVersionsToStore = options.countOfPreviousVersionsToStore.Value;
+          if (options.nugetServerUrl != null) nugetServerUrl = options.nugetServerUrl;
+          if (options.packageBackupfolder != null) packageBackupfolder = options.packageBackupfolder;
+          if (options.dataSourceDefaultVersion != null) dataSourceDefaultVersion = options.dataSourceDefaultVersion;
           if (options.datasourcePackagesRegexSearchPattern != null) datasourcePackagesRegexSearchPattern = options.datasourcePackagesRegexSearchPattern;
           if (options.otherPackagesRegexSearchPattern != null) { otherPackagesRegexSearchPattern = options.otherPackagesRegexSearchPattern; }
-          
-          datasourcePackageAddString = options.datasourcePackageAddString;
-          whatif = options.whatif;
+          if (options.datasourcePackageAddString != null) datasourcePackageAddString = options.datasourcePackageAddString;
+          if (options.whatif != null) whatif = options.whatif.Value;
         }
         else
         {
@@ -63,7 +60,10 @@ namespace CleanNugetSharp
         }
 
         //Composite params
-        string nugetServerUrlNuget = string.Format("{0}/nuget", nugetServerUrl);
+        string nugetServerUrlNuget = nugetServerUrl;
+        if(!nugetServerUrl.Contains("/nuget"))
+          nugetServerUrlNuget = string.Format("{0}/nuget", nugetServerUrl);
+        
         string dataSourceFilter = string.Format("//{0}:Reference", csprojNamespaceAlias);
 
         //init csproj collections
@@ -100,7 +100,7 @@ namespace CleanNugetSharp
           //trying to find in public repos
           if (nugetPackage.Count == 0)
           {
-            logger.Info(string.Format("Have not found {0} in private repo . Trying to find in public repository", package.Id));
+            logger.Info(string.Format("Have not found {0} in private repo {1} . Trying to find in public repository", package.Id, nugetServerUrlNuget));
             IEnumerable<IPackage> foundPublicPackages =new List<IPackage>();
             foreach (var packageRepository in publicRepositoriesList)
             {
