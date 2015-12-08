@@ -18,11 +18,14 @@ namespace CleanNugetSharp
     [XmlArrayItem("referencesExclude")]
     public string[] referencesExcludes;
 
-    [XmlArrayItem("datasourcePackagesRegexSearchPattern")]
+    [XmlElement("datasourcePackagesRegexSearchPattern")]
     public string datasourcePackagesRegexSearchPattern;
 
-    [XmlArrayItem("otherPackagesRegexSearchPattern")]
+    [XmlElement("otherPackagesRegexSearchPattern")]
     public string otherPackagesRegexSearchPattern;
+
+    [XmlArrayItem("publicRepository")]
+    public string[] publicRepositories;
   }
 
   public class ConfigSectionHandler : IConfigurationSectionHandler

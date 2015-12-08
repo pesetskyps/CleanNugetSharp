@@ -25,6 +25,9 @@ namespace CleanNugetSharp
       CsprojConfig appConfig = (CsprojConfig)System.Configuration.ConfigurationSettings.GetConfig("CsprojConfig");
       var csporjPathes = appConfig.pathes;
       var csporjReferenceExcludes = appConfig.referencesExcludes;
+      string datasourcePackagesRegexSearchPattern = appConfig.datasourcePackagesRegexSearchPattern;
+      string otherPackagesRegexSearchPattern = appConfig.otherPackagesRegexSearchPattern;
+      string[] publicRepositories = appConfig.publicRepositories;
 
       string csprojNamespace;
       string datasourceMask;
@@ -32,8 +35,6 @@ namespace CleanNugetSharp
       string nugetServerUrl;
       string packageBackupfolder;
       string dataSourceDefaultVersion;
-      string otherPackagesRegexSearchPattern;
-      string datasourcePackagesRegexSearchPattern;
       string datasourcePackageAddString;
       bool whatif;
 
@@ -49,8 +50,9 @@ namespace CleanNugetSharp
           nugetServerUrl = options.nugetServerUrl;
           packageBackupfolder = options.packageBackupfolder;
           dataSourceDefaultVersion = options.dataSourceDefaultVersion;
-          datasourcePackagesRegexSearchPattern = options.datasourcePackagesRegexSearchPattern;
-          otherPackagesRegexSearchPattern = options.otherPackagesRegexSearchPattern;
+          if (options.datasourcePackagesRegexSearchPattern != null) datasourcePackagesRegexSearchPattern = options.datasourcePackagesRegexSearchPattern;
+          if (options.otherPackagesRegexSearchPattern != null) { otherPackagesRegexSearchPattern = options.otherPackagesRegexSearchPattern; }
+          
           datasourcePackageAddString = options.datasourcePackageAddString;
           whatif = options.whatif;
         }
@@ -62,9 +64,7 @@ namespace CleanNugetSharp
 
         //Composite params
         string nugetServerUrlNuget = string.Format("{0}/nuget", nugetServerUrl);
-        //string dataSourceFilter = string.Format("//{1}:Reference[contains(@Include, '{0}') and {1}:Private]", datasourceMask, csprojNamespaceAlias);
         string dataSourceFilter = string.Format("//{0}:Reference", csprojNamespaceAlias);
-        //string otherpackagesFilter = string.Format("//{1}:Reference[not(contains(@Include, '{0}'))]", datasourceMask,csprojNamespaceAlias);
 
         //init csproj collections
         var packagesUsedInCsprojs = new HashSet<IPackageName>(new PackageComparer<IPackageName>());
@@ -83,11 +83,9 @@ namespace CleanNugetSharp
           throw new Exception("No packages found in csproj files");
         }
 
-        //init nuget repo
+        //init nuget repos
         IPackageRepository repo = PackageRepositoryFactory.Default.CreateRepository(nugetServerUrlNuget);
-         List<IPackageRepository> publicRepositories = new List<IPackageRepository>();
-        publicRepositories.Add(PackageRepositoryFactory.Default.CreateRepository("https://www.nuget.org/api/v2/"));
-        publicRepositories.Add(PackageRepositoryFactory.Default.CreateRepository("https://packages.plex.com/nuget"));
+        List<IPackageRepository> publicRepositoriesList = publicRepositories.Select(packageRepository => PackageRepositoryFactory.Default.CreateRepository(packageRepository)).ToList();
 
         var packageResolver = new GetPackageDependencies(repo);
         HashSet<DataServicePackage> packagesToSave = new HashSet<DataServicePackage>(new PackageComparer<DataServicePackage>());
@@ -104,7 +102,7 @@ namespace CleanNugetSharp
           {
             logger.Info(string.Format("Have not found {0} in private repo . Trying to find in public repository", package.Id));
             IEnumerable<IPackage> foundPublicPackages =new List<IPackage>();
-            foreach (var packageRepository in publicRepositories)
+            foreach (var packageRepository in publicRepositoriesList)
             {
               foundPublicPackages = packageRepository.FindPackagesById(package.Id);
               if (foundPublicPackages.ToList().Count != 0)

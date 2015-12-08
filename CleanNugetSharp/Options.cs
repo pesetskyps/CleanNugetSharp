@@ -33,11 +33,11 @@ HelpText = "Folder to store deleted packages as a backup. Format: d:\\temp\\test
 HelpText = "Currently Datasource don't have version so use default version to create IPackageName object. Format: 1.0.0.0")]
     public string dataSourceDefaultVersion { get; set; }
 
-    [Option("datasourcePackagesRegexSearchPattern", Required = true,
+    [Option("datasourcePackagesRegexSearchPattern", Required = false,
 HelpText = "Regex pattern to extract Datasource name from Reference in Csproj. Format: ..\\lib\\(.*?).dll")]
     public string datasourcePackagesRegexSearchPattern { get; set; }
 
-    [Option("otherPackagesRegexSearchPattern", Required = true,
+    [Option("otherPackagesRegexSearchPattern", Required = false,
 HelpText = @"Pattern to extract common packages (not DataSources) from Reference in csproj. Format: ..\\packages\\(.*?).(\\d.*?)\\\\")]
     public string otherPackagesRegexSearchPattern { get; set; }
 
